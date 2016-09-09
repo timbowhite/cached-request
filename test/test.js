@@ -94,13 +94,16 @@ describe("CachedRequest", function () {
         expect(response.headers["x-from-cache"]).to.not.exist;
         expect(body).to.deep.equal(responseBody);
 
-        self.cachedRequest(options, function (error, response, body) {
-          if (error) return done(error);
-          expect(response.statusCode).to.equal(200);
-          expect(response.headers["x-from-cache"]).to.equal(1);
-          expect(body).to.deep.equal(responseBody);
-          done();
-        });
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
+          self.cachedRequest(options, function (error, response, body) {
+            if (error) return done(error);
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers["x-from-cache"]).to.equal(1);
+            expect(body).to.deep.equal(responseBody);
+            done();
+          });
+        }, 25);
       });
     });
 
@@ -126,13 +129,17 @@ describe("CachedRequest", function () {
         expect(response.headers["x-from-cache"]).to.not.exist;
         expect(body).to.deep.equal(responseBody);
 
-        self.cachedRequest(options, function (error, response, body) {
-          if (error) return done(error);
-          expect(response.statusCode).to.equal(200);
-          expect(response.headers["x-from-cache"]).to.equal(1);
-          expect(body).to.deep.equal(responseBody);
-          done();
-        });
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
+
+          self.cachedRequest(options, function (error, response, body) {
+            if (error) return done(error);
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers["x-from-cache"]).to.equal(1);
+            expect(body).to.deep.equal(responseBody);
+            done();
+          });
+        }, 25);
       });
     });
 
@@ -158,21 +165,25 @@ describe("CachedRequest", function () {
         expect(response.statusCode).to.equal(200);
         expect(response.headers["x-from-cache"]).to.not.exist;
 
-        zlib.gunzip(body, function (error, buffer) {
-          if (error) return done(error);
-          expect(buffer.toString()).to.deep.equal(responseBody);
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
 
-          self.cachedRequest(options, function (error, response, body) {
+          zlib.gunzip(body, function (error, buffer) {
             if (error) return done(error);
-            expect(response.statusCode).to.equal(200);
-            expect(response.headers["x-from-cache"]).to.equal(1);
-            zlib.gunzip(body, function (error, buffer) {
-              if (error) done(error);
-              expect(buffer.toString()).to.deep.equal(responseBody);
-              done();
+            expect(buffer.toString()).to.deep.equal(responseBody);
+
+            self.cachedRequest(options, function (error, response, body) {
+              if (error) return done(error);
+              expect(response.statusCode).to.equal(200);
+              expect(response.headers["x-from-cache"]).to.equal(1);
+              zlib.gunzip(body, function (error, buffer) {
+                if (error) done(error);
+                expect(buffer.toString()).to.deep.equal(responseBody);
+                done();
+              });
             });
           });
-        });
+        }, 25);
       });
     });
 
@@ -284,21 +295,25 @@ describe("CachedRequest", function () {
         expect(response.statusCode).to.equal(200);
         expect(response.headers["x-from-cache"]).to.not.exist;
 
-        zlib.gunzip(body, function (error, buffer) {
-          if (error) return done(error);
-          expect(buffer.toString()).to.deep.equal(responseBody);
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
 
-          self.cachedRequest(options, function (error, response, body) {
+          zlib.gunzip(body, function (error, buffer) {
             if (error) return done(error);
-            expect(response.statusCode).to.equal(200);
-            expect(response.headers["x-from-cache"]).to.equal(1);
-            zlib.gunzip(body, function (error, buffer) {
-              if (error) done(error);
-              expect(buffer.toString()).to.deep.equal(responseBody);
-              done();
+            expect(buffer.toString()).to.deep.equal(responseBody);
+
+            self.cachedRequest(options, function (error, response, body) {
+              if (error) return done(error);
+              expect(response.statusCode).to.equal(200);
+              expect(response.headers["x-from-cache"]).to.equal(1);
+              zlib.gunzip(body, function (error, buffer) {
+                if (error) done(error);
+                expect(buffer.toString()).to.deep.equal(responseBody);
+                done();
+              });
             });
           });
-        });
+        }, 25);
       });
     });
   });
@@ -327,19 +342,22 @@ describe("CachedRequest", function () {
       .on("end", function () {
         expect(body).to.equal(responseBody);
         body = "";
-        //Make cached request
-        self.cachedRequest(options)
-        .on("response", function (response) {
-          expect(response.statusCode).to.equal(200);
-          expect(response.headers["x-from-cache"]).to.equal(1);
-          response.on("data", function (data) {
-            body += data;
-          })
-          .on("end", function () {
-            expect(body).to.equal(responseBody);
-            done();
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
+          //Make cached request
+          self.cachedRequest(options)
+          .on("response", function (response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers["x-from-cache"]).to.equal(1);
+            response.on("data", function (data) {
+              body += data;
+            })
+            .on("end", function () {
+              expect(body).to.equal(responseBody);
+              done();
+            });
           });
-        });
+        }, 25);
       });
     });
 
@@ -366,19 +384,23 @@ describe("CachedRequest", function () {
       .on("end", function () {
         expect(body).to.equal(responseBody);
         body = "";
-        //Make cached request
-        self.cachedRequest(options)
-        .on("response", function (response) {
-          expect(response.statusCode).to.equal(200);
-          expect(response.headers["x-from-cache"]).to.equal(1);
-          response.on("data", function (data) {
-            body += data;
-          })
-          .on("end", function () {
-            expect(body).to.equal(responseBody);
-            done();
+      
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
+          //Make cached request
+          self.cachedRequest(options)
+          .on("response", function (response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers["x-from-cache"]).to.equal(1);
+            response.on("data", function (data) {
+              body += data;
+            })
+            .on("end", function () {
+              expect(body).to.equal(responseBody);
+              done();
+            });
           });
-        });
+        }, 25);
       });
     });
 
@@ -405,19 +427,23 @@ describe("CachedRequest", function () {
       .on("end", function () {
         expect(body).to.equal(responseBody);
         body = "";
-        //Make cached request
-        self.cachedRequest(options)
-        .on("response", function (response) {
-          expect(response.statusCode).to.equal(200);
-          expect(response.headers["x-from-cache"]).to.equal(1);
-          response.on("data", function (data) {
-            body += data;
-          })
-          .on("end", function () {
-            expect(body).to.equal(responseBody);
-            done();
+
+        // wait for JSON file to written + flushed
+        setTimeout(function(){
+          //Make cached request
+          self.cachedRequest(options)
+          .on("response", function (response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers["x-from-cache"]).to.equal(1);
+            response.on("data", function (data) {
+              body += data;
+            })
+            .on("end", function () {
+              expect(body).to.equal(responseBody);
+              done();
+            });
           });
-        });
+        }, 25);
       });
     });
 
@@ -447,30 +473,33 @@ describe("CachedRequest", function () {
         })
         .on("end", function () {
           body = "";
-          //Make cached request
-          self.cachedRequest(options)
-            .on("response", function (response) {
-              expect(response.statusCode).to.equal(200);
-              expect(response.headers["x-from-cache"]).to.equal(1);
-              expect(response.headers["content-encoding"]).to.equal("gzip");
 
-              var gunzip = zlib.createGunzip();
-              gunzip.on("data", function (data) {
-                body += data.toString();
+          // wait for JSON file to written + flushed
+          setTimeout(function(){
+            //Make cached request
+            self.cachedRequest(options)
+              .on("response", function (response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers["x-from-cache"]).to.equal(1);
+                expect(response.headers["content-encoding"]).to.equal("gzip");
+
+                var gunzip = zlib.createGunzip();
+                gunzip.on("data", function (data) {
+                  body += data.toString();
+                });
+
+                gunzip.on("end", function () {
+                  expect(body).to.equal(responseBody);
+                  done();
+                });
+
+                gunzip.on('error', function (error) {
+                  done(error);
+                });
+
+                response.pipe(gunzip);
               });
-
-              gunzip.on("end", function () {
-                expect(body).to.equal(responseBody);
-                done();
-              });
-
-              gunzip.on('error', function (error) {
-                done(error);
-              });
-
-              response.pipe(gunzip);
-            });
-
+          }, 25);
         });
     });
   });
