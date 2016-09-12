@@ -1,14 +1,16 @@
 var CachedRequest = require("../")
 ,   request = require("request")
 ,   nock = require("nock")
-,   temp = require('temp').track()
+,   temp = require('temp')
 ,   Readable = require("stream").Readable
 ,   util = require("util")
 ,   zlib = require("zlib")
 ,   mmm = require('mmmagic')
 ,   Magic = mmm.Magic
 ,   path = require('path')
-,   fs = require('fs');
+,   fs = require('fs')
+,   Q = require('q')
+,   lo = require('lodash');
 
 util.inherits(MockedResponseStream, Readable);
 
@@ -25,14 +27,23 @@ MockedResponseStream.prototype._read = function (size) {
 describe("CachedRequest", function () {
   var cacheDir;
 
-  function mock (method, times, response, headers) {
+  function mock (method, times, response, headers, opt) {
+    opt = opt || {};
+    lo.defaults(opt, {
+      delay: 0,
+      delayBody: 0
+    });
     method = method.toLowerCase();
     times = times || 1;
-    nock("http://ping.com")
+    var n = nock("http://ping.com")
       .filteringPath(/.+/, "/")
       [method]("/")
-      .times(times)
-      .reply(200, response, headers);
+      .times(times);
+
+    if (opt.delay) n.delay(opt.delay);
+    if (opt.delayBody) n.delayBody(opt.delayBody);
+
+    n.reply(200, response, headers);
   };
 
   before(function () {
@@ -471,6 +482,78 @@ describe("CachedRequest", function () {
             });
         });
     });
+  });
+
+  describe("concurrency", function () {
+    var nockopts = [
+    { 
+      delay: 0,
+      delayBody: 0,
+    },
+    { 
+      delay: 0,
+      delayBody: 500,
+    },
+    {
+      delay: 500,
+      delayBody: 0,
+    },
+    {
+      delay: 250,
+      delayBody: 250,
+    }];
+
+    lo.forEach(nockopts, function(nockopt, x){
+      var count = 500 * (x + 1);
+      var teststr = "only makes 1 req when called " + count + "x async on same url with delayed nock opt = " + 
+        JSON.stringify(nockopt);
+      
+      it(teststr, function (done) {
+        this.timeout(2000 * (x + 1));
+        var self = this;
+        var responseBody = "";
+        var p = [];
+
+        for (var i = 0; i < 10000; i++) responseBody += "this is a longer response body";
+
+        //Return gzip compressed response with valid content encoding header
+        mock("GET", 1, function () {
+          return new MockedResponseStream({}, responseBody).pipe(zlib.createGzip());
+        },
+        {
+          "Content-Encoding": "gzip"
+        },
+        nockopt
+        );
+
+        for(var i = 0; i < count; i++)(function(i){
+          var options = {url: "http://ping.com/", ttl: 3600 * 1000, i: i};
+          options.timeout = (nockopt.delay || 0) + (nockopt.delayBody || 0) + 100; 
+
+          var body = "";
+
+          //Make fresh request
+          var def = Q.defer();
+          self.cachedRequest(options, function (error, response, body) {
+            if (error) return def.reject(error); 
+
+            if (options.i === 0) expect(response.headers["x-from-cache"]).to.not.exist;
+            else expect(response.headers["x-from-cache"]).to.equal(1);
+
+            def.resolve();
+          });
+
+          p.push(def.promise);
+        }(i));
+
+        return Q.all(p).then(function(){ done(); }).fail(done);
+      });
+    });
+
+    // TODO: other tests 
+    // if response is currently being written, don't wait if lockOpt.wait is falsey
+    // if response is currently being written, wait if lockOpt.wait
+    // fork multiple processes
   });
 
   after(function () {

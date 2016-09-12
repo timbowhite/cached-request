@@ -23,13 +23,16 @@
     "graceful-fs": "^4.0.0",
     "lodash": "^4.15.0",
     "mkdirp": "^0.5.1",
+    "proper-lockfile": "^1.2.0",
+    "q": "^1.4.1",
+    "retry": "^0.10.0",
     "write-file-atomic": "^1.2.0"
   },
   "devDependencies": {
     "chai": "^1.10.0",
     "mmmagic": "^0.4.5",
     "mocha": "^2.1.0",
-    "nock": "^0.52.4",
+    "nock": "^8.0.0",
     "request": "^2.51.0",
     "temp": "^0.8.1"
   }
