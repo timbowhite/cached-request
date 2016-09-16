@@ -554,6 +554,7 @@ describe("CachedRequest", function () {
     // if response is currently being written, don't wait if lockOpt.wait is falsey
     // if response is currently being written, wait if lockOpt.wait
     // fork multiple processes
+    // responses with error status codes
   });
 
   after(function () {
